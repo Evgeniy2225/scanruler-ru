@@ -1,0 +1,11 @@
+/* Barlow и B612 Mono в ScanRuler не содержат кириллицы. Для русских букв
+   берём близкий по рисунку Bahnschrift (есть в Windows 10/11), иначе —
+   системный шрифт. Латиница и цифры остаются в оригинальных шрифтах. */
+@font-face{font-family:"Barlow";font-weight:100 500;src:local("Bahnschrift"),local("Segoe UI"),local("Roboto"),local("Arial");unicode-range:U+0400-04FF,U+2116}
+@font-face{font-family:"Barlow";font-weight:600 900;src:local("Bahnschrift SemiBold"),local("Bahnschrift"),local("Segoe UI Semibold"),local("Roboto Medium"),local("Arial");unicode-range:U+0400-04FF,U+2116}
+@font-face{font-family:"Barlow Semi Condensed";font-weight:100 500;src:local("Bahnschrift SemiCondensed"),local("Bahnschrift"),local("Segoe UI"),local("Arial Narrow"),local("Arial");unicode-range:U+0400-04FF,U+2116}
+@font-face{font-family:"Barlow Semi Condensed";font-weight:600 900;src:local("Bahnschrift SemiBold SemiConden"),local("Bahnschrift SemiBold"),local("Segoe UI Semibold"),local("Arial");unicode-range:U+0400-04FF,U+2116}
+@font-face{font-family:"B612 Mono";src:local("Consolas"),local("Cascadia Mono"),local("DejaVu Sans Mono"),local("Courier New");unicode-range:U+0400-04FF,U+2116}
+/* Русские подписи длиннее английских: разрешаем перенос на кнопках операций. */
+html[lang=ru] .kindrow button{white-space:normal}
+html[lang=ru] .kindrow.featurekeys button span{white-space:normal;text-overflow:clip;-webkit-hyphens:auto;hyphens:auto;overflow-wrap:break-word;text-align:center;font-size:10.5px;line-height:1.05;letter-spacing:-.1px}
