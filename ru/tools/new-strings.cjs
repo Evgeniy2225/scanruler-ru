@@ -11,7 +11,7 @@ const dictDir = path.join(root, 'ru', 'i18n')
 const have = new Set()
 for (const f of fs.readdirSync(dictDir).filter((f) => f.endsWith('.json')))
   for (const k of Object.keys(JSON.parse(fs.readFileSync(path.join(dictDir, f), 'utf8')))) have.add(k)
-const DIRS = ['src/ui', 'src/app', 'src/viewer', 'src/state', 'src/App.tsx', 'plugins/mesh-tools/ui', 'plugins/mesh-tools/app', 'plugins/reverse/ui', 'plugins/reverse/state']
+const DIRS = ['src/ui', 'src/app', 'src/viewer', 'src/state', 'src/App.tsx', 'plugins/mesh-tools/ui', 'plugins/mesh-tools/app', 'plugins/reverse/ui', 'plugins/reverse/state', 'src/core/dimensions.ts', 'src/core/tolerances.ts', 'src/core/elements', 'src/core/flat/construct.ts', 'src/core/flat/dimensions.ts', 'src/core/flat/summary.ts', 'plugins/reverse/core/thread.ts', 'plugins/reverse/core/wasmSupport.ts', 'plugins/reverse/viewer/networkLayer.ts', 'plugins/mesh-tools/core', 'plugins/reverse/app', 'src/core/hints.ts', 'src/core/field/colormap.ts', 'src/core/parsers']
 const files = []
 const walk = (p) => {
   if (!fs.existsSync(p)) return

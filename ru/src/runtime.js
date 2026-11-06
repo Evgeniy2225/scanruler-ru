@@ -21,7 +21,7 @@
   }, true)
   var api = window.scanrulerRu = { lang: lang, toggle: toggle, missing: function () { return Array.from(missing) } }
   var missing = new Set()
-  if (lang !== 'ru') return
+  if (lang !== 'ru') { document.documentElement.lang = 'en'; return }
 
   var DICT = window.__SCANRULER_RU_DICT || {}
   var exact = new Map()
@@ -36,7 +36,7 @@
     var key = norm(k)
     if (!/\{\d+\}/.test(key)) { exact.set(key, v); return }
     // a template needs real words of its own, or it would match anything
-    if (key.replace(/\{\d+\}/g, '').replace(/[^A-Za-z]/g, '').length < 3) return
+    if (key.replace(/\{\d+\}/g, '').replace(/[^A-Za-z]/g, '').length < 2) return
     var parts = key.split(/\{(\d+)\}/)  // lit, idx, lit, idx, lit
     // A count — "{0} points" → "Точек: {0}", "{0} element{1}" — takes a number
     // only, or "Redone: save element" would read as a count of elements.
@@ -49,7 +49,7 @@
       if (i % 2 === 0) { re += esc(parts[i]); if (parts[i].length > longest.length) longest = parts[i] }
       else { re += numeric[parts[i]] ? '([\\d−+-][\\d.,  ]*)' : '([\\s\\S]*?)'; order.push(+parts[i]) }
     }
-    var t = { re: new RegExp(re + '$'), order: order, out: v, need: longest, lits: parts.filter(function (_, i) { return i % 2 === 0 }).join('').length }
+    var t = { re: new RegExp(re + '$'), order: order, out: v, need: longest, generic: /^(and|of|on|at|by|in|the)$/.test(norm(key.replace(/\{\d+\}/g, ''))), lits: parts.filter(function (_, i) { return i % 2 === 0 }).join('').length }
     var head = parts[0]
     if (head.length >= 2) {
       var w = head.split(' ')[0] || head
@@ -67,11 +67,15 @@
       if (t.need && s.indexOf(t.need) < 0) continue
       var m = t.re.exec(s)
       if (!m) continue
-      var vals = {}
+      var vals = {}, incomplete = false
       for (var j = 0; j < t.order.length; j++) {
         var g = m[j + 1]
-        vals[t.order[j]] = g && g !== s ? (trCore(g, true) || g) : g
+        var translated = g && g !== s ? trCore(g, true) : null
+        // A bare preposition must not turn an unknown sentence into mixed RU/EN.
+        if (t.generic && /[A-Za-z]{2}/.test(g) && translated == null) incomplete = true
+        vals[t.order[j]] = translated || g
       }
+      if (incomplete) continue
       return t.out.replace(/\{(\d+)\}/g, function (_, n) { return vals[n] != null ? vals[n] : '' })
     }
     return null
@@ -79,7 +83,8 @@
   var cache = new Map()
   function trCore(s, inner) {
     if (!s || !/[A-Za-z]{2}/.test(s)) return null
-    if (cache.has(s)) return cache.get(s)
+    var cacheKey = (inner ? 'inner:' : 'outer:') + s
+    if (cache.has(cacheKey)) return cache.get(cacheKey)
     var r = exact.get(s)
     if (r == null) {
       var w = s.split(' ')[0]
@@ -112,7 +117,7 @@
     }
     if (r == null && !inner && s.length < 300) missing.add(s)
     if (cache.size > 20000) cache.clear()
-    cache.set(s, r)
+    cache.set(cacheKey, r)
     return r
   }
   function tr(raw) {
