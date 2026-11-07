@@ -25,6 +25,10 @@ if %NODEMAJOR% LSS 22 (
   goto :fail
 )
 
+rem Проверка только сообщает об обновлениях и не мешает запуску при ошибке сети.
+node "ru\check-updates.mjs"
+if errorlevel 1 echo  [!] Проверка обновлений не выполнена. Продолжаю запуск.
+
 if not exist "node_modules\" (
   echo  Первый запуск: устанавливаю зависимости, это займёт несколько минут...
   call npm install --no-audit --no-fund

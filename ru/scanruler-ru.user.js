@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScanRuler RU — русский интерфейс
 // @namespace    scanruler-ru
-// @version      0.1.1
+// @version      0.1.2
 // @description  Русификатор интерфейса ScanRuler by CNC Kitchen. Alt+Shift+L — RU/EN.
 // @match        https://scanruler.com/*
 // @match        http://127.0.0.1/*

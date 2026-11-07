@@ -1,12 +1,13 @@
 {
   "name": "scanruler-ru",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "license": "AGPL-3.0-only",
   "description": "Русификатор интерфейса ScanRuler by CNC Kitchen",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "check-updates": "node check-updates.mjs"
   }
 }
