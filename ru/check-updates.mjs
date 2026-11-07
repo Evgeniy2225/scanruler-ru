@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Read-only startup check. No credentials, downloads, or changes to local files.
+// Release check; installation is optional and requires console confirmation.
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -32,7 +32,7 @@ export function compareVersions(a, b) {
   return 0
 }
 
-export async function latestVersion(repo, fetchImpl = fetch) {
+export async function latestRelease(repo, fetchImpl = fetch) {
   // HEAD follows GitHub's stable "latest" redirect without downloading the page.
   const response = await fetchImpl(`https://github.com/${repo}/releases/latest`, {
     method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -46,10 +46,14 @@ export async function latestVersion(repo, fetchImpl = fetch) {
   }
   const version = decodeURIComponent(url.pathname.slice(prefix.length))
   parseVersion(version)
-  return version.replace(/^v/, '')
+  return { version: version.replace(/^v/, ''), tag: version }
 }
 
-export async function checkComponent(component, { fetchImpl = fetch, readManifest = readFile } = {}) {
+export async function latestVersion(repo, fetchImpl = fetch) {
+  return (await latestRelease(repo, fetchImpl)).version
+}
+
+export async function inspectComponent(component, { fetchImpl = fetch, readManifest = readFile } = {}) {
   const link = `https://github.com/${component.repo}/releases/latest`
   let installed
   try {
@@ -58,25 +62,62 @@ export async function checkComponent(component, { fetchImpl = fetch, readManifes
     installed = pkg.version
     parseVersion(installed)
   } catch {
-    return `[?] ${component.name}: установленная версия не определена. Проверьте папку установки.\n    ${link}`
+    return { message: `[?] ${component.name}: установленная версия не определена. Проверьте папку установки.\n    ${link}` }
   }
   try {
-    const latest = await latestVersion(component.repo, fetchImpl)
+    const release = await latestRelease(component.repo, fetchImpl)
+    const latest = release.version
     const comparison = compareVersions(latest, installed)
-    if (comparison > 0) return `[!] ${component.name}: доступно обновление ${installed} → ${latest}.\n    Скачать: ${link}`
-    if (comparison < 0) return `[OK] ${component.name}: установлено ${installed}; последний релиз ${latest} — установленная версия новее.`
-    return `[OK] ${component.name}: ${installed} — обновлений нет.`
+    if (comparison > 0) return { component, installed, ...release, message: `[!] ${component.name}: доступно обновление ${installed} → ${latest}.\n    Скачать: ${link}` }
+    if (comparison < 0) return { message: `[OK] ${component.name}: установлено ${installed}; последний релиз ${latest} — установленная версия новее.` }
+    return { message: `[OK] ${component.name}: ${installed} — обновлений нет.` }
   } catch (error) {
     const reason = ['TimeoutError', 'AbortError'].includes(error?.name) ? 'истекло время ожидания' : 'GitHub недоступен или не удалось прочитать версию'
-    return `[?] ${component.name}: установлено ${installed}; проверить обновления не удалось (${reason}).\n    Проверить вручную: ${link}`
+    return { message: `[?] ${component.name}: установлено ${installed}; проверить обновления не удалось (${reason}).\n    Проверить вручную: ${link}` }
   }
+}
+
+export async function checkComponent(component, options) {
+  return (await inspectComponent(component, options)).message
+}
+
+export function isYes(answer) { return /^(y|yes|д|да)$/i.test(answer.trim()) }
+
+export async function offerUpdates(results, { ask, install, log = console.log }) {
+  let changed = false
+  // Update the application first; the current updater stays loaded in memory.
+  for (const update of results.filter(result => result.component)) {
+    if (!isYes(await ask(`Установить ${update.component.name} ${update.version}? [д/N]: `))) continue
+    try {
+      await install(update)
+      changed = true
+      log(`[OK] ${update.component.name} обновлён до ${update.version}.`)
+    } catch (error) {
+      log(`[!] Обновление не установлено: ${error.message}`)
+    }
+  }
+  return changed
 }
 
 export async function main() {
   console.log('\nПроверка обновлений ScanRuler и русификатора (до 8 секунд)…')
-  const results = await Promise.all(COMPONENTS.map(component => checkComponent(component)))
-  results.forEach(result => console.log(result))
-  console.log('Проверка завершена. Продолжаю запуск; файлы не изменялись.\n')
+  const results = await Promise.all(COMPONENTS.map(component => inspectComponent(component)))
+  results.forEach(result => console.log(result.message))
+  if (process.argv.includes('--install') && results.some(result => result.component)) {
+    if (!process.stdin.isTTY) console.log('Нет интерактивной консоли: установка пропущена.')
+    else {
+      console.log('Перед обновлением сохраните проект и закройте другие окна запуска ScanRuler. Enter — пропустить.')
+      const { createInterface } = await import('node:readline/promises')
+      const { installUpdate } = await import('./install-update.mjs')
+      const rl = createInterface({ input: process.stdin, output: process.stdout })
+      try {
+        const changed = await offerUpdates(results, { ask: text => rl.question(text), install: installUpdate })
+        // The BAT file can itself have been replaced. Restart it before continuing.
+        if (changed) process.exitCode = 20
+      } finally { rl.close() }
+    }
+  }
+  console.log('Проверка завершена.\n')
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

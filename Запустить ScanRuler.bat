@@ -6,8 +6,6 @@ rem Двойной щелчок: проверяет Node.js, при первом
 rem и собирает приложение, подключает русификатор и открывает браузер.
 cd /d "%~dp0"
 title ScanRuler RU
-set "PORT=7317"
-set "URL=http://127.0.0.1:%PORT%/"
 
 where node >nul 2>nul
 if errorlevel 1 (
@@ -25,9 +23,17 @@ if %NODEMAJOR% LSS 22 (
   goto :fail
 )
 
-rem Проверка только сообщает об обновлениях и не мешает запуску при ошибке сети.
-node "ru\check-updates.mjs"
-if errorlevel 1 echo  [!] Проверка обновлений не выполнена. Продолжаю запуск.
+rem Предлагает установить найденные обновления; Enter — пропустить.
+rem Блок читается до установки: BAT-файл может быть заменён обновлением.
+(
+  node "ru\check-updates.mjs" --install
+  if errorlevel 20 (
+    echo  Обновление установлено. Запустите этот BAT-файл снова.
+    pause
+    exit /b 0
+  )
+  if errorlevel 1 echo  [!] Проверка обновлений не выполнена. Продолжаю запуск.
+)
 
 if not exist "node_modules\" (
   echo  Первый запуск: устанавливаю зависимости, это займёт несколько минут...
@@ -42,29 +48,9 @@ if not exist "dist\index.html" (
 node "ru\apply.mjs" "dist"
 if errorlevel 1 goto :fail
 
-rem Уже запущен (этим файлом или через Claude)? Тогда просто открываем браузер.
-powershell -NoProfile -Command "try { if ((Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 '%URL%').Content -match 'scanruler-ru') { exit 0 } } catch {}; exit 1"
-if not errorlevel 1 (
-  echo  ScanRuler уже запущен — открываю %URL%
-  start "" "%URL%"
-  timeout /t 3 >nul
-  exit /b 0
-)
-
-for /f "usebackq delims=" %%d in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('MyDocuments')"`) do set "DOCS=%%d"
-set "OUT=%DOCS%\ScanRuler"
-if not exist "%OUT%" mkdir "%OUT%"
-
-echo.
-echo  ============================================================
-echo   ScanRuler RU работает: %URL%
-echo   Экспорт от Claude сохраняется в: %OUT%
-echo   Alt+Shift+L в браузере — переключить язык RU/EN.
-echo   Не закрывайте это окно, пока работаете. Закрыть — остановить.
-echo  ============================================================
-echo.
-start "" powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 5; Start-Process '%URL%'"
-call npx -y scanruler-mcp@latest --serve "%CD%\dist" --out "%OUT%"
+rem Интерфейс работает отдельно от MCP на порту 7318.
+node "ru\launch.mjs"
+if errorlevel 1 goto :fail
 exit /b 0
 
 :fail
