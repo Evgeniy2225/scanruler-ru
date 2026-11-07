@@ -15,8 +15,8 @@ export async function isOurPage(url, root, fetchImpl = fetch) {
 
 function openBrowser(url) {
   if (process.argv.includes('--no-browser')) return
-  const child = spawn('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-Command', 'Start-Process $env:SCANRULER_BROWSER_URL'], {
-    env: {...process.env, SCANRULER_BROWSER_URL: url}, windowsHide: true, stdio: 'ignore',
+  const child = spawn('explorer.exe', [url], {
+    detached: true, windowsHide: true, stdio: 'ignore',
   })
   child.on('error', () => console.log(`Откройте в браузере: ${url}`))
   child.unref()
@@ -29,6 +29,7 @@ export async function main() {
   if (await isOurPage(base, root)) {
     console.log(`ScanRuler уже запущен: ${base}`)
     openBrowser(base)
+    process.exitCode = 21 // Let the BAT explain why a second server is not started.
     return
   }
   // Vite is already a dependency of ScanRuler. Do not use MCP's service port for the UI.

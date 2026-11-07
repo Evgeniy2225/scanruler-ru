@@ -50,6 +50,12 @@ if errorlevel 1 goto :fail
 
 rem Интерфейс работает отдельно от MCP на порту 7318.
 node "ru\launch.mjs"
+if errorlevel 21 (
+  echo  Программа уже работает в другом окне. Браузер открыт повторно.
+  echo  Это окно можно закрыть. Основное окно ScanRuler оставьте открытым.
+  pause
+  exit /b 0
+)
 if errorlevel 1 goto :fail
 exit /b 0
 
