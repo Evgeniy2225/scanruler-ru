@@ -90,3 +90,11 @@ test('ScanRuler 0.10.1 labels, casing, units and minimum-zone details', () => {
   // A sentence begins with a capital; a noun used inside it keeps its own case.
   assert.equal(tr('reference'), 'эталон')
 })
+
+
+test('ScanRuler 0.10.2 project errors preserve filenames and diagnostic paths', () => {
+  const { tr } = load().window.scanrulerRu
+  assert.equal(tr('The project cannot hold a file named "деталь.jpé".'), 'В проект нельзя сохранить файл с именем «деталь.jpé».')
+  assert.equal(tr('Malformed project: flat.sheets.section-1.datum.originPx.'), 'Повреждённый проект: flat.sheets.section-1.datum.originPx.')
+  assert.equal(tr('Malformed project: duplicate or invalid archive member.'), 'Повреждённый проект: повторяющийся или неверный элемент архива.')
+})

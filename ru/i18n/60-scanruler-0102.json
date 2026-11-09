@@ -1,0 +1,4 @@
+{
+  "The project cannot hold a file named \"{0}\".": "В проект нельзя сохранить файл с именем «{0}».",
+  "Malformed project: {0}.": "Повреждённый проект: {0}."
+}
