@@ -1,77 +1,72 @@
-﻿# ScanRuler RU — подключение Claude к ScanRuler (сервер scanruler-mcp).
-# Прописывает сервер в Claude Desktop (claude_desktop_config.json) и, если
-# установлен, в Claude Code. Перед изменением делает резервную копию.
-# SPDX-License-Identifier: AGPL-3.0-only
+﻿# SPDX-License-Identifier: AGPL-3.0-only
+param([switch]$CheckOnly)
 $ErrorActionPreference = 'Stop'
-try { Start-Transcript -Path (Join-Path $PSScriptRoot 'connect-claude.log') -Force | Out-Null } catch {}
-trap { Write-Host " [!] Ошибка: $_" -ForegroundColor Red; try { Stop-Transcript | Out-Null } catch {}; break }
-$root = Split-Path -Parent $PSScriptRoot
-$dist = Join-Path $root 'dist'
-$out  = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'ScanRuler'
-if (-not (Test-Path $out)) { New-Item -ItemType Directory -Path $out | Out-Null }
+$exitCode = 0
+try {
+  $nodeExe = (Get-Command node -ErrorAction Stop).Source
+  $root = Split-Path -Parent $PSScriptRoot
+  $dist = Join-Path $root 'dist'
+  if (-not (Test-Path -LiteralPath (Join-Path $dist 'index.html'))) { throw 'Сначала запустите «Запустить ScanRuler.bat», чтобы создать сборку dist.' }
+  $manifest = Get-Content -LiteralPath (Join-Path $root 'package.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+  if ($manifest.name -ne 'scanruler') { throw 'BAT и папка ru должны находиться в папке самого ScanRuler.' }
+  $out = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'ScanRuler'
+  $helper = Join-Path $PSScriptRoot 'claude-config.mjs'
+  $entryText = & $nodeExe $helper --entry $out
+  if ($LASTEXITCODE -ne 0) { throw 'Не удалось подготовить команду MCP. См. сообщение выше.' }
+  $entry = $entryText | ConvertFrom-Json
 
-$args_ = @('/c', 'npx', '-y', 'scanruler-mcp@latest', '--serve', $dist, '--out', $out)
-$utf8 = New-Object System.Text.UTF8Encoding $false
-
-Write-Host ''
-Write-Host ' ScanRuler будет открываться у Claude в русской версии:' -ForegroundColor Cyan
-Write-Host "   приложение: $dist"
-Write-Host "   экспорт:    $out"
-Write-Host ''
-
-if (-not (Test-Path (Join-Path $dist 'index.html'))) {
-  Write-Host ' [!] Нет собранного приложения в dist. Сначала один раз запустите «Запустить ScanRuler.bat».' -ForegroundColor Yellow
-}
-
-# --- Claude Desktop -------------------------------------------------------
-# Где Claude Desktop хранит настройки, зависит от версии:
-#  - новые версии из Microsoft Store: %LOCALAPPDATA%\Claude-Data\claude_*\
-#  - старые версии из Store:          %LOCALAPPDATA%\Packages\Claude_*\LocalCache\Roaming\Claude\
-#  - обычный установщик:              %APPDATA%\Claude\
-# Если есть Claude-Data — настройки там, старую копию из Packages Claude уже не читает.
-$dirs = @()
-Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Claude-Data') -Directory -Filter 'claude*' -ErrorAction SilentlyContinue |
-  ForEach-Object { $dirs += $_.FullName }
-if (-not $dirs) {
-  $dirs += Join-Path $env:APPDATA 'Claude'
-  Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Packages') -Directory -Filter 'Claude_*' -ErrorAction SilentlyContinue |
-    ForEach-Object { $dirs += Join-Path $_.FullName 'LocalCache\Roaming\Claude' }
-  $dirs = @($dirs | Where-Object { Test-Path $_ })
-}
-
-if (-not $dirs) {
-  Write-Host ' Claude Desktop не найден (нет папки настроек). Если он установлен, запустите его один раз и повторите.' -ForegroundColor Yellow
-} else {
-  foreach ($d in $dirs) {
-    $cfg = Join-Path $d 'claude_desktop_config.json'
-    & node (Join-Path $PSScriptRoot 'claude-config.mjs') $cfg $dist $out
-    if ($LASTEXITCODE -eq 0) { Write-Host " Claude Desktop: сервер scanruler прописан в $cfg" -ForegroundColor Green }
-    else { Write-Host " [!] Не удалось изменить $cfg" -ForegroundColor Red }
+  # Prefer the current Store profile. Fall back to the traditional and older Store paths.
+  $dirs = @()
+  Get-ChildItem -LiteralPath (Join-Path $env:LOCALAPPDATA 'Claude-Data') -Directory -Filter 'claude*' -ErrorAction SilentlyContinue |
+    ForEach-Object { $dirs += $_.FullName }
+  if (-not $dirs) {
+    $dirs += Join-Path $env:APPDATA 'Claude'
+    Get-ChildItem -LiteralPath (Join-Path $env:LOCALAPPDATA 'Packages') -Directory -Filter 'Claude_*' -ErrorAction SilentlyContinue |
+      ForEach-Object { $dirs += Join-Path $_.FullName 'LocalCache\Roaming\Claude' }
+    $dirs = @($dirs | Where-Object { Test-Path -LiteralPath $_ -PathType Container })
   }
+  $dirs = @($dirs | Select-Object -Unique)
+  $claudeCommand = Get-Command claude -ErrorAction SilentlyContinue
+  Write-Host ' Интерфейс ScanRuler: http://127.0.0.1:7318/'
+  Write-Host " Экспорт: $out"
+  if ($CheckOnly) {
+    Write-Host " Проверка без записи. Папок Claude Desktop: $($dirs.Count). Claude Code: $([bool]$claudeCommand)."
+    Write-Host " Node.js и npm найдены; сборка ScanRuler готова."
+    exit 0
+  }
+  $success = 0
+  if (-not $dirs) { Write-Host ' Claude Desktop не найден. Если он установлен, откройте его один раз и повторите.' }
+  foreach ($dir in $dirs) {
+    $cfg = Join-Path $dir 'claude_desktop_config.json'
+    & $nodeExe $helper --write $cfg $out
+    if ($LASTEXITCODE -eq 0) { $success++ }
+    else { $exitCode = 1; Write-Host " [!] Не удалось настроить Claude Desktop: $cfg" -ForegroundColor Red }
+  }
+  if ($claudeCommand) {
+    # An existing server may hold custom permissions or point to a different installation.
+    # Never remove it before a replacement has been installed successfully.
+    $ErrorActionPreference = 'Continue'
+    & $claudeCommand.Source mcp get scanruler *> $null
+    $alreadyExists = $LASTEXITCODE -eq 0
+    $ErrorActionPreference = 'Stop'
+    if ($alreadyExists) {
+      Write-Host ' Claude Code: scanruler уже есть; настройки сохранены без изменений. При необходимости проверьте адрес через claude mcp get scanruler.'
+      $success++
+    } else {
+      $commandArgs = @('mcp','add','--scope','user','--transport','stdio','scanruler','--',$entry.command) + @($entry.args)
+      & $claudeCommand.Source @commandArgs
+      if ($LASTEXITCODE -eq 0) { $success++; Write-Host ' Claude Code: сервер добавлен для всех проектов.' }
+      else { $exitCode = 1; Write-Host ' [!] Claude Code не добавил сервер. Существующие подключения не удалялись.' -ForegroundColor Red }
+    }
+  } else { Write-Host ' Claude Code не найден; пропускаю.' }
+  if ($success -eq 0) { throw 'Ни одного подключения не настроено. Установите и один раз откройте Claude Desktop или Claude Code.' }
   Write-Host ''
-  Write-Host ' Теперь ПОЛНОСТЬЮ закройте Claude Desktop (значок у часов → Quit / Выход)' -ForegroundColor Yellow
-  Write-Host ' и откройте снова — иначе настройка не подхватится.' -ForegroundColor Yellow
+  Write-Host ' Полностью закройте Claude Desktop через Выход / Quit и откройте снова. Claude Code тоже перезапустите.'
+  Write-Host ' Запустите «Запустить ScanRuler.bat», затем попросите Claude подключиться к открытой странице.'
+  Write-Host ' Подтвердите подключение агента в ScanRuler. Для другого порта используйте адрес из консоли и включите подключение локального агента в настройках.'
+  Write-Host ' При первом подключении нужен интернет для загрузки scanruler-mcp.'
+} catch {
+  Write-Host " [!] $($_.Exception.Message)" -ForegroundColor Red
+  $exitCode = 1
 }
-
-# --- Claude Code ----------------------------------------------------------
-$ErrorActionPreference = 'Continue'
-$claude = Get-Command claude -ErrorAction SilentlyContinue
-if ($claude) {
-  Write-Host ''
-  try { & claude mcp remove scanruler --scope user *> $null } catch {}
-  try {
-    & claude mcp add --scope user scanruler -- cmd /c npx -y scanruler-mcp@latest --serve "$dist" --out "$out"
-    if ($LASTEXITCODE -eq 0) { Write-Host ' Claude Code: сервер scanruler добавлен (для всех проектов).' -ForegroundColor Green }
-    else { Write-Host ' [!] Claude Code не принял настройку — см. сообщение выше.' -ForegroundColor Yellow }
-  } catch { Write-Host " [!] Claude Code: $_" -ForegroundColor Yellow }
-} else {
-  Write-Host ''
-  Write-Host ' Claude Code не найден — пропускаю (это нормально, если вы им не пользуетесь).'
-}
-
-Write-Host ''
-Write-Host ' Дальше: откройте Claude и напишите «Подключись к ScanRuler».' -ForegroundColor Cyan
-Write-Host ' В первый раз ScanRuler предупредит, что данные, которые читает агент, уходят его модели,'
-Write-Host ' — нажмите «Подключить агента». Если браузер спросит про доступ к устройствам — «Разрешить».'
-Write-Host ''
-try { Stop-Transcript | Out-Null } catch {}
+exit $exitCode
