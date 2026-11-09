@@ -70,3 +70,23 @@ test('all translations use only placeholders present in their source', () => {
     assert.ok(!translated.includes('\uFFFD'), source)
   }
 })
+
+
+test('ScanRuler 0.10.1 labels, casing, units and minimum-zone details', () => {
+  const { tr } = load().window.scanrulerRu
+  for (const [source, expected] of Object.entries({
+    'No reference loaded': 'Эталон не загружен',
+    'No image loaded': 'Изображение не загружено',
+    'True length (mm)': 'Реальная длина (мм)',
+    'Max gap (mm)': 'Макс. зазор (мм)',
+    'WORKING 25%': 'ВЫПОЛНЯЕТСЯ 25%',
+    'Three-plane intersection': 'Пересечение трёх плоскостей',
+    'Tangent to a cylinder': 'Касательная к цилиндру',
+    'Densify': 'Уплотнить сетку',
+    'Wrap': 'Замкнутая оболочка',
+    'Minimum zone · 1,250 points · 0.050 mm peak to peak about the best fit': 'Минимальная зона · точек: 1,250 · полный размах относительно наилучшего приближения: 0.050 мм',
+    'Wrapped — 2 shells, 120 triangles,': 'Оболочка построена — оболочек: 2, треугольников: 120,',
+  })) assert.equal(tr(source), expected, source)
+  // A sentence begins with a capital; a noun used inside it keeps its own case.
+  assert.equal(tr('reference'), 'эталон')
+})

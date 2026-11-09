@@ -151,6 +151,13 @@
     textState.set(n, { src: src, out: out })
     if (n.nodeValue !== out) n.nodeValue = out
   }
+  function trText(el, s) {
+    // "From" selects how a scale is defined here; elsewhere it is a range's start.
+    if (norm(s) === 'From' && el.closest && el.closest('[data-test="scale-box"]')) {
+      return s.replace('From', 'Способ задания')
+    }
+    return tr(s)
+  }
   function doElementText(el) {
     if (!el || el.nodeType !== 1 || skipEl(el)) return
     var kids = el.childNodes, texts = [], onlyText = true
@@ -164,17 +171,17 @@
     try {
       if (onlyText && texts.length > 1) {
         var srcs = texts.map(srcOf), joined = srcs.join('')
-        var whole = tr(joined)
+        var whole = trText(el, joined)
         if (whole != null) {
           setText(texts[0], srcs[0], whole)
           for (var j = 1; j < texts.length; j++) setText(texts[j], srcs[j], '')
           return
         }
-        texts.forEach(function (t, j) { var o = tr(srcs[j]); setText(t, srcs[j], o == null ? srcs[j] : o) })
+        texts.forEach(function (t, j) { var o = trText(el, srcs[j]); setText(t, srcs[j], o == null ? srcs[j] : o) })
         return
       }
       texts.forEach(function (t) {
-        var s = srcOf(t), o = tr(s)
+        var s = srcOf(t), o = trText(el, s)
         if (o != null) setText(t, s, o)
         else if (textState.has(t) && t.nodeValue !== s) setText(t, s, s)
       })

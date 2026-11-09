@@ -11,7 +11,7 @@ const dictDir = path.join(root, 'ru', 'i18n')
 const have = new Set()
 for (const f of fs.readdirSync(dictDir).filter((f) => f.endsWith('.json')))
   for (const k of Object.keys(JSON.parse(fs.readFileSync(path.join(dictDir, f), 'utf8')))) have.add(k)
-const DIRS = ['src/ui', 'src/app', 'src/viewer', 'src/state', 'src/App.tsx', 'plugins/mesh-tools/ui', 'plugins/mesh-tools/app', 'plugins/reverse/ui', 'plugins/reverse/state', 'src/core/dimensions.ts', 'src/core/tolerances.ts', 'src/core/elements', 'src/core/flat/construct.ts', 'src/core/flat/dimensions.ts', 'src/core/flat/summary.ts', 'plugins/reverse/core/thread.ts', 'plugins/reverse/core/wasmSupport.ts', 'plugins/reverse/viewer/networkLayer.ts', 'plugins/mesh-tools/core', 'plugins/reverse/app', 'src/core/hints.ts', 'src/core/field/colormap.ts', 'src/core/parsers']
+const DIRS = ['src/ui', 'src/app', 'src/viewer', 'src/state', 'src/App.tsx', 'plugins/mesh-tools/ui', 'plugins/mesh-tools/app', 'plugins/reverse/ui', 'plugins/reverse/state', 'src/core/dimensions.ts', 'src/core/tolerances.ts', 'src/core/elements', 'src/core/flat/construct.ts', 'src/core/flat/dimensions.ts', 'src/core/flat/summary.ts', 'plugins/reverse/core/thread.ts', 'plugins/reverse/core/wasmSupport.ts', 'plugins/reverse/viewer/networkLayer.ts', 'plugins/mesh-tools/core', 'plugins/reverse/app', 'src/core/hints.ts', 'src/core/field/colormap.ts', 'src/core/parsers', 'plugins/reverse/core/meshResolution.ts']
 const files = []
 const walk = (p) => {
   if (!fs.existsSync(p)) return
@@ -20,12 +20,12 @@ const walk = (p) => {
 }
 DIRS.forEach((d) => walk(path.join(root, d)))
 const ATTRS = /^(title|placeholder|aria-label|alt|label|detail|hint|tip|text|heading|note|caption|info|help|summary|message|legend|empty|description)$|Label|Text|Title|Hint|Tip$/
-const prose = (s) => (/[a-z]/.test(s) && /\s/.test(s.trim())) || /^[A-Z][a-z]+(…)?$/.test(s.trim())
+const prose = (s) => (/[a-z]/.test(s) && /\s/.test(s.trim())) || /^[A-Z][A-Za-z]+(…)?$/.test(s.trim())
 const dec = (s) => s.replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&rsquo;/g, '’').replace(/&nbsp;/g, ' ')
 const found = new Map()
 const add = (s, f) => {
   s = dec(s.replace(/\s+/g, ' ').trim())
-  if (!/[A-Za-z]{2}/.test(s) || s.length > 400 || have.has(s) || /rgba?\(|px \{|#include|uniform |gl_/.test(s)) return
+  if (!/[A-Za-z]{2}/.test(s) || have.has(s) || /rgba?\(|px \{|#include|uniform |gl_/.test(s)) return
   if (!found.has(s)) found.set(s, path.relative(root, f))
 }
 for (const f of files) {
