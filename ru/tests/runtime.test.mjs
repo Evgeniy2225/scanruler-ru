@@ -98,3 +98,26 @@ test('ScanRuler 0.10.2 project errors preserve filenames and diagnostic paths', 
   assert.equal(tr('Malformed project: flat.sheets.section-1.datum.originPx.'), 'Повреждённый проект: flat.sheets.section-1.datum.originPx.')
   assert.equal(tr('Malformed project: duplicate or invalid archive member.'), 'Повреждённый проект: повторяющийся или неверный элемент архива.')
 })
+
+
+test('ScanRuler 0.11.1 project warnings translate the complete message', () => {
+  const { tr } = load().window.scanrulerRu
+  const one = tr('Project opened — part.scanruler. The surface of Cylinder 1 could not be found again — its saved fit stands (No points).')
+  assert.match(one, /^Проект открыт — part.scanruler\. Не удалось повторно найти поверхность/)
+  assert.doesNotMatch(one, /its saved fit|could not be found/)
+  const many = tr('Project opened — part.scanruler. The surfaces of Cylinder 1 and Plane 2 could not be found again — their saved fits stand (No points).')
+  assert.match(many, /сохранённые результаты аппроксимации/)
+  const newer = tr('This project was saved by a newer version of ScanRuler — please reload the app to open it. It has construction "plane:future-method", which this version does not know.')
+  assert.match(newer, /Не поддерживается способ построения: «plane:future-method»/)
+})
+
+
+test('ScanRuler 0.11.1 agent help preserves the port and commands', () => {
+  const { tr } = load().window.scanrulerRu
+  const source = `Nothing answers on port 7317 on this computer yet. Is the AI app running, with ScanRuler's connector (scanruler-mcp) on that port? "npx -y scanruler-mcp@latest --pair" prints the port and the token. In Safari, or where the browser will not let this site reach this computer, open the page "scanruler-mcp --serve" gives instead.`
+  const result = tr(source)
+  assert.match(result, /^На порту 7317 этого компьютера пока нет ответа/)
+  assert.ok(result.includes('npx -y scanruler-mcp@latest --pair'))
+  assert.ok(result.includes('scanruler-mcp --serve'))
+  assert.doesNotMatch(result, /Nothing answers|Is the AI app|prints the port/)
+})

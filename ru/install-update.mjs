@@ -132,6 +132,7 @@ async function installApp(update, root, temp) {
 }
 
 export async function installUpdate(update, root = ROOT) {
+  root = resolve(root)
   parseVersion(update.version)
   if (compareVersions(update.version,update.installed) <= 0 || !/^v?\d+\.\d+\.\d+(?:-[\w.-]+)?(?:\+[\w.-]+)?$/.test(update.tag)) throw new Error('Некорректная версия обновления')
   const local = JSON.parse(await readFile(join(root,update.component.packageName === 'scanruler' ? 'package.json' : 'ru/package.json'),'utf8'))

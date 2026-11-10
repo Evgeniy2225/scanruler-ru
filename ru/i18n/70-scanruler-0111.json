@@ -1,0 +1,17 @@
+{
+  "This project was saved by a newer version of ScanRuler — please reload the app to open it.": "Этот проект сохранён в более новой версии ScanRuler. Обновите приложение и перезагрузите страницу, чтобы открыть его.",
+  "This project was saved by a newer version of ScanRuler — please reload the app to open it. It has {0} \"{1}\", which this version does not know.": "Этот проект сохранён в более новой версии ScanRuler. Обновите приложение и перезагрузите страницу, чтобы открыть его. Не поддерживается {0}: «{1}».",
+  "element kind": "тип элемента",
+  "construction": "способ построения",
+  "fit method": "метод аппроксимации",
+  "dimension type": "тип размера",
+  "2D element kind": "тип 2D-элемента",
+  "2D element method": "способ построения 2D-элемента",
+  "2D dimension type": "тип 2D-размера",
+  "Waiting for the browser to let this page reach apps on this computer. If it asks, allow it; if it asked before and was told no, allow local network access in the site settings (the icon left of the address), then reload.": "Ожидание разрешения браузера на подключение страницы к приложениям на этом компьютере. Разрешите доступ в запросе браузера. Если ранее вы отказали, разрешите доступ к локальной сети в настройках сайта (значок слева от адреса), затем перезагрузите страницу.",
+  "Nothing answers on port {0} on this computer yet. Is the AI app running, with ScanRuler's connector (scanruler-mcp) on that port? \"npx -y scanruler-mcp@latest --pair\" prints the port and the token. In Safari, or where the browser will not let this site reach this computer, open the page \"scanruler-mcp --serve\" gives instead.": "На порту {0} этого компьютера пока нет ответа. Запущено ли приложение ИИ с коннектором ScanRuler (scanruler-mcp) на этом порту? Команда «npx -y scanruler-mcp@latest --pair» выводит порт и токен. В Safari или при запрете браузером локальных подключений откройте страницу, которую обслуживает «scanruler-mcp --serve».",
+  "The surface of {0} could not be found again — its saved fit stands ({1}).": "Не удалось повторно найти поверхность элемента {0}; сохранённый результат аппроксимации оставлен без изменений ({1}).",
+  "The surfaces of {0} could not be found again — their saved fits stand ({1}).": "Не удалось повторно найти поверхности элементов {0}; сохранённые результаты аппроксимации оставлены без изменений ({1}).",
+  "Project opened — {0}. The surface of {1} could not be found again — its saved fit stands ({2}).{3}": "Проект открыт — {0}. Не удалось повторно найти поверхность элемента {1}; сохранённый результат аппроксимации оставлен без изменений ({2}).{3}",
+  "Project opened — {0}. The surfaces of {1} could not be found again — their saved fits stand ({2}).{3}": "Проект открыт — {0}. Не удалось повторно найти поверхности элементов {1}; сохранённые результаты аппроксимации оставлены без изменений ({2}).{3}"
+}
