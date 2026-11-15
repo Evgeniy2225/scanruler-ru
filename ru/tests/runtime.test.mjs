@@ -121,3 +121,19 @@ test('ScanRuler 0.11.1 agent help preserves the port and commands', () => {
   assert.ok(result.includes('scanruler-mcp --serve'))
   assert.doesNotMatch(result, /Nothing answers|Is the AI app|prints the port/)
 })
+
+
+test('ScanRuler 0.11.2 curvature readings, context menus and edited-copy notices', () => {
+  const { tr } = load().window.scanrulerRu
+  assert.equal(tr('Curvature comb'), 'Гребёнка кривизны')
+  assert.equal(tr('Copy reading'), 'Копировать показание')
+  assert.equal(tr('Copy position'), 'Копировать координаты')
+  assert.equal(tr('Remove pin'), 'Удалить закреплённое показание')
+  assert.equal(tr('R 4.82 mm, convex (smoothed)'), 'R 4.82 мм, выпуклый участок (со сглаживанием)')
+  assert.equal(tr('R 0.19 in, concave'), 'R 0.19 in, вогнутый участок')
+  for (const [n, word] of [[1, 'edit'], [3, 'edits']]) {
+    const s = tr(`Mesh Tools holds an edited copy of the scan (${n} ${word}) that is not in use — this workspace measures the scan as it was.`)
+    assert.ok(s.includes(`(правок: ${n})`))
+    assert.doesNotMatch(s, /Mesh Tools|workspace measures/)
+  }
+})

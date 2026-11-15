@@ -140,7 +140,7 @@
   // What we wrote, so a later React update can be told from our own write.
   var textState = new WeakMap() // TextNode → {src, out}
   var attrState = new WeakMap() // Element → {attr: {src, out}}
-  var ATTRS = ['title', 'placeholder', 'aria-label', 'alt', 'data-tip', 'data-tooltip']
+  var ATTRS = ['title', 'placeholder', 'aria-label', 'alt', 'data-tip', 'data-tooltip', 'label']
   var writing = false
 
   function srcOf(n) {
@@ -211,11 +211,26 @@
     for (var i = 0; i < all.length; i++) { doElementText(all[i]); doAttrs(all[i]) }
   }
 
+  // React positions help before translation. Longer Russian text must remain
+  // inside the viewport; very tall help cards can be scrolled independently.
+  function fitHelpCards() {
+    var cards = document.querySelectorAll('.infocard')
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i]
+      card.style.maxHeight = 'calc(100vh - 16px)'
+      card.style.overflowY = 'auto'
+      var rect = card.getBoundingClientRect()
+      var top = Math.max(8, Math.min(rect.top, window.innerHeight - rect.height - 8))
+      if (Math.abs(rect.top - top) > 0.5) card.style.top = top + 'px'
+    }
+  }
+
   var pending = new Set(), scheduled = false
   function flush() {
     scheduled = false
     var list = Array.from(pending); pending.clear()
     for (var i = 0; i < list.length; i++) if (list[i].isConnected) walk(list[i])
+    fitHelpCards()
   }
   function queue(n) {
     if (!n) return
@@ -246,6 +261,8 @@
   function start() {
     document.documentElement.lang = 'ru'
     walk(document.documentElement)
+    fitHelpCards()
+    window.addEventListener('resize', fitHelpCards)
     mo.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS })
   }
   // The title lives in <head>, which exists already when this runs.
