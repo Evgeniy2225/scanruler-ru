@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 const repo = fileURLToPath(new URL('../../', import.meta.url))
-const bats = ['Запустить ScanRuler.bat', 'Обновить ScanRuler.bat', 'Подключить Claude.bat', 'Подключить ChatGPT.bat']
+const bats = ['Запустить ScanRuler.bat', 'Обновить ScanRuler.bat', 'Подключить Claude.bat', 'Подключить ChatGPT.bat', 'Установить ScanRuler.bat']
 function run(root, name) {
   return spawnSync('cmd.exe', ['/d', '/c', 'call', name], {
     cwd: root, input: '\n', encoding: 'utf8', windowsHide: true, timeout: 20000,

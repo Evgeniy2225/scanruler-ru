@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
 import { compareVersions, parseVersion } from './check-updates.mjs'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const BATS = ['Запустить ScanRuler.bat', 'Обновить ScanRuler.bat', 'Подключить Claude.bat', 'Подключить ChatGPT.bat']
+const BATS = ['Запустить ScanRuler.bat', 'Обновить ScanRuler.bat', 'Подключить Claude.bat', 'Подключить ChatGPT.bat', 'Установить ScanRuler.bat']
 const exists = path => stat(path).then(() => true, () => false)
 
 export function run(command, args, cwd, capture = false) {
