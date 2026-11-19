@@ -23,6 +23,18 @@ if %NODEMAJOR% LSS 22 (
   goto :fail
 )
 
+rem Первый запуск распакованного комплекта: установить программу рядом с ru.
+if not exist "package.json" (
+  node "ru\install-scanruler.mjs" --prompt
+  if errorlevel 20 (
+    pause
+    exit /b 0
+  )
+  if errorlevel 1 goto :fail
+  pause
+  exit /b 0
+)
+
 rem Предлагает установить найденные обновления; Enter — пропустить.
 rem Блок читается до установки: BAT-файл может быть заменён обновлением.
 (
