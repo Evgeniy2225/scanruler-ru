@@ -49,7 +49,7 @@ test('generic prepositions do not partially translate unknown English prose', ()
   assert.equal(tr('Untranslated first and untranslated second'), null)
   assert.equal(tr('An unknown sentence of an unknown kind'), null)
   assert.equal(tr('Units of bracket.stl'), 'Единицы измерения файла «bracket.stl»')
-  assert.equal(tr('Pick a shape to fit on the part — then click that feature on the scan'), 'Выберите геометрический элемент, затем щёлкните соответствующую область скана')
+  assert.equal(tr('Pick a shape to fit on the part — then click that feature on the scan'), 'Выберите тип геометрического элемента, затем щёлкните соответствующую поверхность 3D-модели')
 })
 test('technical labels, progress and parameter units', () => {
   const { tr } = load().window.scanrulerRu
