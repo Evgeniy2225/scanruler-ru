@@ -14,4 +14,8 @@
 
 Пользуетесь ScanRuler на сайте? Установите [браузерный скрипт](https://github.com/Evgeniy2225/scanruler-ru/releases/latest/download/scanruler-ru.user.js) через Tampermonkey или Violentmonkey.
 
-[Полное руководство — установка, подключение Claude и ChatGPT, решение проблем](ru/README.md) · [История изменений](ru/CHANGELOG.md) · [Сообщить об ошибке перевода](https://github.com/Evgeniy2225/scanruler-ru/issues)
+[Полное руководство — установка, подключение Claude и ChatGPT, решение проблем](ru/README.md) · [История изменений](ru/CHANGELOG.md)
+
+## Как поддержать русификатор
+
+Если перевод вам пригодился, поставьте звезду ⭐ на GitHub кнопкой **Star**. Заметили неточный перевод? [Сообщите об этом в Issues](https://github.com/Evgeniy2225/scanruler-ru/issues).
